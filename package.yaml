@@ -1,0 +1,25 @@
+name: doconv
+
+version: 0.0.1
+
+github: ikervagyok/doconv
+
+ghc-options: -Wall -threaded
+
+dependencies:
+  - base
+  - pandoc
+  - servant  
+  - servant-client  
+  - brick
+
+library:
+# doconv:
+    source-dirs: src/
+
+executables:
+  doconv-exe:
+    main: Main.hs
+    source-dirs: app/
+    dependencies:
+      doconv
