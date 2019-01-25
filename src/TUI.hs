@@ -4,8 +4,9 @@ import Brick
 import Brick.Widgets.Center
 import Brick.Widgets.Border
 import Brick.Widgets.Border.Style
+-- import Data.IORef
 
-ui :: Widget ()
-ui = withBorderStyle unicode $
-     borderWithLabel (str "Hello!") $
-     (center (str "Left") <+> vBorder <+> center (str "Right"))
+ui :: String -> Widget ()
+ui x = withBorderStyle unicode $
+       borderWithLabel (str x) $
+       center (str x) <+> vBorder <+> center (str x)

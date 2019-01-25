@@ -9,9 +9,17 @@ ghc-options: -Wall -threaded
 dependencies:
   - base
   - pandoc
-  - servant  
+  - servant
+  - servant-server  
   - servant-client  
   - brick
+  - text
+  - time
+  - wai
+  - warp
+  - aeson
+  - transformers
+
 
 library:
 # doconv:
