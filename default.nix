@@ -1,30 +1,42 @@
-{ nixpkgs ? null, createContainer ? false, createBinary ? true }:
+{ nixpkgs ? null, createContainer ? false, createBinary ? true, static ? false, ghcVersion ? null }:
 
 let
   systemPkgs = import <nixpkgs> {};
   pinnedVersion = systemPkgs.lib.importJSON ./nixpkgs.json;
   pinnedPkgs = systemPkgs.fetchFromGitHub {
-     owner = "NixOS";
-     repo = "nixpkgs";
-     inherit (pinnedVersion) rev sha256;
+    owner = "NixOS";
+    repo = "nixpkgs";
+    inherit (pinnedVersion) rev sha256;
    };
-  pkgs = if nixpkgs == null then import pinnedPkgs {} else import nixpkgs {};
-  project = pkgs.haskellPackages.callPackage ( ./project.nix ) { };
-# project = pkgs.haskell.packages.ghc844.callPackage ( ./project.nix ) { };
-  filter = builtins.filterSource (path: type: type != "symlink" || !(builtins.isList (builtins.match "result.*" (baseNameOf path))));
-  newProject = pkgs.lib.overrideDerivation project ( old: { src = filter old.src; });
+  hsNoTest = self: super: {
+    haskellPackages = super.haskellPackages.override {
+      overrides = selfH: superH: {
+        tdigest = self.haskell.lib.dontCheck superH.tdigest;
+        hslua   = self.haskell.lib.dontCheck superH.hslua;
+      };
+    };
+  };
+  pkgs = let packages = (if nixpkgs == null then import pinnedPkgs else import nixpkgs) { overlays = [ hsNoTest ]; };
+         in if static then packages.pkgsMusl else packages;
+
+  project = let hp = if ghcVersion == null then pkgs.haskellPackages else pkgs.haskell.packages.ghc844;
+            in hp.callPackage ( ./project.nix ) { };
+  filter = let match = regex: path: builtins.isList (builtins.match regex (baseNameOf path));
+           in builtins.filterSource ( path: type: !(match "\.git" path) && !(match "result.*" path && !(match ".*\.swp" path)));
+  doconv = pkgs.lib.overrideDerivation project ( old: { src = filter old.src; });
+
 in {
 
   executable = 
     if createBinary
-      then newProject
+      then doconv
       else null;
 
   container =
     if createContainer
       then systemPkgs.dockerTools.buildLayeredImage {
              name = "hello";
-             config.Cmd = [ "${newProject}/bin/doconv-exe" ];
+             config.Cmd = [ "${doconv}/bin/doconv-exe" ];
            }
       else null;
 

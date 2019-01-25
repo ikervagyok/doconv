@@ -10,6 +10,4 @@ let
    };
   pkgs = if nixpkgs == null then import pinnedPkgs {} else import nixpkgs {};
 in 
-  systemPkgs.mkShell { buildInputs = with pkgs; [ cabal2nix haskellPackages.hpack ]; };
-  
-# nix-shell --run 'hpack && cabal2nix . > project.nix' && nix-build && ./result/bin/doconv-exe
+  systemPkgs.mkShell { buildInputs = with pkgs; [ cabal2nix haskellPackages.hpack ]; }
